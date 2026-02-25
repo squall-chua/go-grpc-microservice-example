@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package item.v1;
+
+option go_package = "github.com/squall-chua/go-grpc-microservice-example/api/v1;v1";
+
+import "google/api/annotations.proto";
+import "api/proto/v1/options.proto";
+
+message Item {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+}
+
+message CreateItemRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+}
+
+message GetItemRequest {
+  string id = 1;
+}
+
+message UpdateItemRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+}
+
+message DeleteItemRequest {
+  string id = 1;
+}
+
+message DeleteItemResponse {
+  bool success = 1;
+}
+
+message PageRequest {
+  int32 page_number = 1;
+  int32 page_size = 2;
+}
+
+message PageInfo {
+  int32 page_number = 1;
+  int32 page_size = 2;
+  int32 total_pages = 3;
+  int32 total_items = 4;
+}
+
+message ListItemsRequest {
+  PageRequest page_request = 1;
+  // Optional filters
+  string name_contains = 2;
+  double min_price = 3;
+  double max_price = 4;
+}
+
+message ListItemsResponse {
+  repeated Item items = 1;
+  PageInfo page_info = 2;
+}
+
+service ItemService {
+  rpc CreateItem(CreateItemRequest) returns (Item) {
+    option (google.api.http) = {
+      post: "/v1/items"
+      body: "*"
+    };
+    option (auth.v1.rule) = {
+      required_scopes: ["write:items"]
+      required_roles: ["admin", "editor"]
+    };
+  }
+
+  rpc GetItem(GetItemRequest) returns (Item) {
+    option (google.api.http) = {
+      get: "/v1/items/{id}"
+    };
+    option (auth.v1.rule) = {
+      required_scopes: ["read:items"]
+      // roles not strictly required for reading
+    };
+  }
+
+  rpc UpdateItem(UpdateItemRequest) returns (Item) {
+    option (google.api.http) = {
+      put: "/v1/items/{id}"
+      body: "*"
+    };
+    option (auth.v1.rule) = {
+      required_scopes: ["write:items"]
+      required_roles: ["admin", "editor"]
+    };
+  }
+
+  rpc DeleteItem(DeleteItemRequest) returns (DeleteItemResponse) {
+    option (google.api.http) = {
+      delete: "/v1/items/{id}"
+    };
+    option (auth.v1.rule) = {
+      required_scopes: ["write:items"]
+      required_roles: ["admin"]
+    };
+  }
+
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse) {
+    option (google.api.http) = {
+      get: "/v1/items"
+    };
+    option (auth.v1.rule) = {
+      required_scopes: ["read:items"]
+      // any valid authenticated user with read:items scope
+    };
+  }
+}
